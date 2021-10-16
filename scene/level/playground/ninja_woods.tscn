@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://res/art/terrain/playground/tileset.tres" type="TileSet" id=1]
+[ext_resource path="res://scene/creature/player.tscn" type="PackedScene" id=3]
+[ext_resource path="res://scene/util/camera.tscn" type="PackedScene" id=4]
+[ext_resource path="res://src/controller/other/level_controller.gd" type="Script" id=5]
+
+[node name="NinjaWoods" type="Node2D"]
+script = ExtResource( 5 )
+bottom_death_zone = 500.0
+
+[node name="Player" parent="." instance=ExtResource( 3 )]
+position = Vector2( 289.301, 182.57 )
+z_index = 1
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="Player"]
+remote_path = NodePath("../../Camera")
+
+[node name="Camera" parent="." instance=ExtResource( 4 )]
+position = Vector2( 289.301, 182.57 )
+
+[node name="TileMaps" type="Node" parent="."]
+
+[node name="Solid" type="TileMap" parent="TileMaps"]
+tile_set = ExtResource( 1 )
+cell_size = Vector2( 16, 16 )
+collision_mask = 0
+format = 1
+tile_data = PoolIntArray( 393233, 4, 0, 393234, 4, 0, 393235, 4, 0, 393236, 4, 0, 393237, 4, 0, 393238, 4, 0, 393239, 4, 0, 393240, 4, 0, 393241, 4, 0, 393242, 4, 0, 393243, 4, 0, 458766, 0, 0, 458767, 0, 0, 655374, 44, 0, 655375, 47, 0, 720910, 52, 0, 720911, 51, 0, 786446, 56, 0, 786447, 59, 0, 917519, 46, 0, 917520, 45, 0, 917521, 45, 0, 917522, 45, 0, 917523, 46, 0, 917524, 46, 0, 917525, 46, 0, 917526, 46, 0, 917527, 45, 0, 917530, 46, 0, 917531, 46, 0, 917532, 45, 0, 917533, 46, 0, 917534, 46, 0, 917535, 46, 0, 983064, 45, 0, 983065, 45, 0, 983066, 45, 0, 983071, 45, 0 )
+
+[node name="Ladders" type="TileMap" parent="TileMaps"]
+tile_set = ExtResource( 1 )
+cell_size = Vector2( 16, 16 )
+collision_layer = 16
+collision_mask = 0
+format = 1
+tile_data = PoolIntArray( 393236, 91, 0, 458772, 93, 0, 524308, 93, 0, 589844, 93, 0, 655380, 93, 0, 720916, 93, 0, 786452, 93, 0, 851988, 93, 0, 917524, 93, 0 )

@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://src/util/ground_detector.gd" type="Script" id=1]
+
+[sub_resource type="RayShape2D" id=1]
+length = 6.0
+
+[node name="GroundDetector" type="Area2D"]
+collision_layer = 8
+script = ExtResource( 1 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2( 0, -3 )
+shape = SubResource( 1 )

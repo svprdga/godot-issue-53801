@@ -1,0 +1,270 @@
+[gd_scene load_steps=12 format=2]
+
+[ext_resource path="res://icon.png" type="Texture" id=1]
+[ext_resource path="res://src/controller/creature/player/player_controller.gd" type="Script" id=2]
+
+[sub_resource type="GDScript" id=7]
+script/source = "extends Node
+
+class_name PlayerAnimationHelper
+
+# Export vars
+
+export var jump_top_anim_threshold = 60
+
+# Private vars
+
+var _last_anim: String
+var _coll_shape_init_x: float = 0.0
+var _is_paused: bool = false
+
+# Onready vars
+
+onready var _audio_helper = get_parent().find_node(\"AudioHelper\")
+
+onready var _animation_player = $AnimationPlayer
+onready var _sprite = $Sprite
+
+# Animation methods
+
+
+func _on_run_step_0() -> void:
+	_audio_helper.play_run_step_0()
+
+
+func _on_run_step_1() -> void:
+	_audio_helper.play_run_step_1()
+
+
+func _on_wall_slide() -> void:
+	_audio_helper.play_wall_slide()
+
+
+func _on_climb() -> void:
+	_audio_helper.play_climb()
+
+
+# Public methods
+
+
+func set_animation(
+	is_wall_sliding: bool,
+	input_action: float,
+	is_on_floor: bool,
+	is_double_jump: bool,
+	movement_vector: Vector2,
+	is_receiving_damage: bool,
+	is_dying: bool,
+	is_dashing: bool,
+	is_climbing: bool
+) -> void:
+	var anim: String
+
+	if is_dying:
+		anim = \"death\"
+	elif is_receiving_damage:
+		anim = \"receive_damage\"
+	elif is_wall_sliding:
+		anim = \"wall_slide\"
+	elif is_dashing:
+		anim = \"dash\"
+	elif is_climbing:
+		anim = \"climb\"
+	elif ! is_on_floor:
+		if is_double_jump:
+			anim = \"double_jump\"
+		elif movement_vector.y > jump_top_anim_threshold:
+			anim = \"jump_fall\"
+		elif movement_vector.y < -jump_top_anim_threshold:
+			anim = \"jump_raise\"
+		else:
+			anim = \"jump_top\"
+	else:
+		if movement_vector.x == 0:
+			anim = \"idle\"
+		else:
+			anim = \"run\"
+
+	if anim != null and anim != _last_anim:
+		_animation_player.play(anim)
+		_last_anim = anim
+
+	# Set player facing
+	if is_wall_sliding:
+		if input_action < 0:
+			_sprite.flip_h = false
+		elif input_action > 0:
+			_sprite.flip_h = true
+	else:
+		if input_action < 0:
+			_sprite.flip_h = true
+		elif input_action > 0:
+			_sprite.flip_h = false
+
+
+func pause() -> void:
+	if !_is_paused:
+		_animation_player.playback_speed = 0.0
+		_is_paused = true
+
+
+func resume() -> void:
+	if _is_paused:
+		_animation_player.playback_speed = 1.0
+		_is_paused = false
+"
+
+[sub_resource type="CapsuleShape2D" id=1]
+radius = 11.0
+height = 6.0
+
+[sub_resource type="GDScript" id=8]
+script/source = "extends Area2D
+
+class_name PlayerWallSlideTopHelper
+
+# Public vars
+
+var is_touching_wall_top = false
+
+# Lifecycle
+
+
+func _ready() -> void:
+	connect(\"body_entered\", self, \"_on_body_enter\")
+	connect(\"body_exited\", self, \"_on_body_exit\")
+
+
+func _on_body_enter(_body: Area2D) -> void:
+	is_touching_wall_top = true
+
+
+func _on_body_exit(_body: Area2D) -> void:
+	is_touching_wall_top = false
+"
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 11, 2 )
+
+[sub_resource type="GDScript" id=9]
+script/source = "extends Area2D
+
+class_name PlayerWallSlideBotHelper
+
+# Public vars
+
+var is_touching_ground_bot = false
+
+# Lifecycle
+
+
+func _ready() -> void:
+	connect(\"body_entered\", self, \"_on_body_enter\")
+	connect(\"body_exited\", self, \"_on_body_exit\")
+
+
+func _on_body_enter(_body: Area2D) -> void:
+	is_touching_ground_bot = true
+
+
+func _on_body_exit(_body: Area2D) -> void:
+	is_touching_ground_bot = false
+"
+
+[sub_resource type="RayShape2D" id=3]
+length = 12.0
+
+[sub_resource type="GDScript" id=10]
+script/source = "extends Area2D
+
+class_name PlayerLadderHelper
+
+# Export vars
+
+export var contact_threshold: float = 10.0
+
+# Public vars
+
+var is_touching_ladder: bool = false
+
+# Lifecycle
+
+
+func _ready() -> void:
+	connect(\"body_entered\", self, \"_on_body_enter\")
+	connect(\"body_exited\", self, \"_on_body_exit\")
+
+
+func _on_body_enter(_node: Node) -> void:
+	is_touching_ladder = true
+
+
+func _on_body_exit(_node: Node) -> void:
+	is_touching_ladder = false
+"
+
+[sub_resource type="CapsuleShape2D" id=4]
+radius = 3.0
+
+[sub_resource type="CapsuleShape2D" id=5]
+height = 6.0
+
+[node name="Player" type="KinematicBody2D"]
+collision_layer = 2
+collision_mask = 5
+script = ExtResource( 2 )
+run_acceleration = 200.0
+run_max_speed = 150.0
+run_stop_force = 1600.0
+death_mitigate_amount = 0.95
+after_hit_enemy_jump_force = 350.0
+
+[node name="AnimationHelper" type="Node2D" parent="."]
+script = SubResource( 7 )
+
+[node name="EnemyContactHelper" type="Area2D" parent="."]
+visible = false
+collision_layer = 8
+collision_mask = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyContactHelper"]
+position = Vector2( 0, 19 )
+shape = SubResource( 1 )
+
+[node name="WallSlideTopHelper" type="Area2D" parent="."]
+visible = false
+collision_layer = 8
+script = SubResource( 8 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WallSlideTopHelper"]
+position = Vector2( 0, 9 )
+shape = SubResource( 2 )
+
+[node name="WallSlideBotHelper" type="Area2D" parent="."]
+visible = false
+script = SubResource( 9 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WallSlideBotHelper"]
+position = Vector2( 0, 32 )
+shape = SubResource( 3 )
+
+[node name="LadderHelper" type="Area2D" parent="."]
+collision_layer = 8
+collision_mask = 16
+script = SubResource( 10 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LadderHelper"]
+position = Vector2( 0, 19 )
+shape = SubResource( 4 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
+position = Vector2( 0, 19 )
+shape = SubResource( 5 )
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( 0, 20 )
+scale = Vector2( 0.25, 0.375 )
+texture = ExtResource( 1 )
+
+[connection signal="body_entered" from="EnemyContactHelper" to="." method="_on_EnemyContact_body_entered"]
